@@ -87,6 +87,8 @@ class NER(object):
                 'For the desired passband(s), the NER formalism requires '
                 'that `trans` < %f' % (2 * np.min(intervals)))
 
+
+
     def getNumTaps(self):
         '''Get number of "taps" for desired falloff and accuracy.
         The relevant formulas are given in Eq. (12) and (13) of
@@ -113,14 +115,12 @@ class NER(object):
         # Eq. (13) of Kaiser & Reed
         Np = int((Kf / (2 * delta)) + 0.75)
 
-        # Further, as is discussed in the paragraph following
-        # Eq. (6) in Kaiser & Reed, we want to have an *odd*
-        # number of taps (e.g. odd `Np`) such that the filter
-        # introduces *no* phase delay
-        if Np % 2 == 0:
-            Np += 1
-
-        return Np
+        # Now, the returned value for the number of taps is
+        # *guaranteed* to be an *odd* integer. As discussed
+        # in the paragraph following Eq. (6) in Kaiser & Reed,
+        # an odd number of taps prevents the filter from
+        # introducing phase shifts
+        return (2 * Np) + 1
 
     def filter(self):
         # Convolve with given signal, optimized convolution method
