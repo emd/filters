@@ -87,8 +87,6 @@ class NER(object):
                 'For the desired passband(s), the NER formalism requires '
                 'that `trans` < %f' % (2 * np.min(intervals)))
 
-
-
     def getNumTaps(self):
         '''Get number of "taps" for desired falloff and accuracy.
         The relevant formulas are given in Eq. (12) and (13) of
