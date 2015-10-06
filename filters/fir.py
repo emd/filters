@@ -88,9 +88,39 @@ class NER(object):
                 'that `trans` < %f' % (2 * np.min(intervals)))
 
     def getNumTaps(self):
-        '''Get number of "taps" for desired falloff and accuracy.'''
-        # Ensure it is *odd* so that we get zero phase delay!!!
-        pass
+        '''Get number of "taps" for desired falloff and accuracy.
+        The relevant formulas are given in Eq. (12) and (13) of
+        Kaiser & Reed, RSI 48, 1447 (1977).
+
+        '''
+        # Eq. (11) of Kaiser & Reed
+        lambda_dB = -20 * np.log10(self.ripple)
+
+        # Eq. (12) of Kaiser & Reed
+        if lambda_dB > 21:
+            Kf = 0.13927 * (lambda_dB - 7.95)
+        else:
+            # Note: this limit should functionally never be used
+            # due to the constraint that `self.ripple` < 0.02,
+            # while `lambda_DB` < 21 requires `self.ripple` > 0.089.
+            # This is included for completeness...
+            Kf = 1.8445
+
+        # Normalize transition bandwidth to Nyquist frequency
+        # to make contact with Kaiser & Reed paper
+        delta = self.trans / (self.Fs / 2.)
+
+        # Eq. (13) of Kaiser & Reed
+        Np = int((Kf / (2 * delta)) + 0.75)
+
+        # Further, as is discussed in the paragraph following
+        # Eq. (6) in Kaiser & Reed, we want to have an *odd*
+        # number of taps (e.g. odd `Np`) such that the filter
+        # introduces *no* phase delay
+        if Np % 2 == 0:
+            Np += 1
+
+        return Np
 
     def filter(self):
         # Convolve with given signal, optimized convolution method

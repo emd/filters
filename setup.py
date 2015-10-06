@@ -4,9 +4,9 @@ except ImportError:
     from distutils.core import setup
 
 config = {
-    'name': 'filter',
+    'name': 'filters',
     'version': '0.1',
-    'packages': ['filter'],
+    'packages': ['filters'],
     'install_requires': ['numpy', 'scipy', 'matplotlib', 'nose'],
     'author': 'Evan M. Davis',
     'author_email': 'emd@mit.edu',
