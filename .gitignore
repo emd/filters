@@ -1,5 +1,5 @@
 *.pyc
 *.swp
 build/*
-filter.egg-info/*
+filters.egg-info/*
 dist/*
