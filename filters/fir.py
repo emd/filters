@@ -177,7 +177,7 @@ class NER(object):
             # Convert frequencies from units of [`self.Fs`] to radians / sample
             worN *= Fs_to_wnorm
         else:
-            worN = Fs_to_wnorm
+            worN = freqs_or_N
 
         w, h = signal.freqz(self.b, a=1, worN=worN)
 
