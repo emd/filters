@@ -189,6 +189,18 @@ class NER(object):
 
         return f, h
 
+    def getValidSlice(self):
+        '''Get slice corresponding to `valid` data points in filtered signal,
+        for which boundary effects of the filter are not visible.
+
+        '''
+        # The filter has (2 * `Np`) + 1 taps, so the first `Np` and last `Np`
+        # points in the filtered signal display boundary effects
+        num_taps = self.b.size
+        Np = (num_taps - 1) / 2
+
+        return slice(Np, -Np, None)
+
     def applyTo(self, y):
         '''Apply filter to signal `y`, where `y` was sampled at `self.Fs`.
 
