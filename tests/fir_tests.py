@@ -38,3 +38,48 @@ def test_NER_getFrequencyResponse():
     # The filter gain should be -3 dB (i.e. ~0.5) at the cutoff frequencies
     f, h = bpf.getFrequencyResponse(freqs_or_N=bpf.cutoff)
     np.testing.assert_almost_equal(np.abs(h), 10 ** -0.3, decimal=2)
+
+
+def test_NER_applyTo_LPF():
+    # Generate signal at `f0`
+    Fs = 20
+    t = np.arange(0, 10, 1. / Fs)
+    f0 = 1 + np.random.rand()
+    y0 = np.cos(2 * np.pi * f0 * t)
+
+    # Add some distortion at 3 * `f0`
+    y = y0 + (0.1 * np.cos(2 * np.pi * (3 * f0) * t))
+
+    # Create low-pass filter that should only pass `f0`
+    lpf = NER(0.02, [2 * f0], 0.25 * f0, Fs)
+
+    # Filter out 3 * `f0` component and compare "valid" component
+    # of result to `y0`
+    yfilt = lpf.applyTo(y)
+    valid = lpf.getValidSlice()
+    np.testing.assert_almost_equal(yfilt[valid], y0[valid], decimal=2)
+
+
+def test_NER_applyTo_BPF():
+    # Generate signal at `f0`
+    Fs = 20
+    t = np.arange(0, 100, 1. / Fs)
+    f0 = 1 + np.random.rand()
+    y0 = np.cos(2 * np.pi * f0 * t)
+
+    # Add some distortion at 3 * `f0`
+    y = y0 + (0.1 * np.cos(2 * np.pi * (3 * f0) * t))
+
+    # Add some low frequency variation
+    y += 5 * np.cos(2 * np.pi * (0.01 * f0) * t)
+
+    # Create band-pass filter that should only pass `f0`
+    flo = 0.5 * f0
+    fhi = 2 * f0
+    bpf = NER(0.02, [flo, fhi], 0.1 * (fhi - flo), Fs, pass_zero=False)
+
+    # Filter out 3 * `f0` component and compare "valid" component
+    # of result to `y0`
+    yfilt = bpf.applyTo(y)
+    valid = bpf.getValidSlice()
+    np.testing.assert_almost_equal(yfilt[valid], y0[valid], decimal=1)
