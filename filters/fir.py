@@ -73,7 +73,7 @@ class NER(object):
         # Is the condition on ripple size satisfied?
         if ripple <= 0.02:
             self.ripple = ripple
-            self.ripple_dB = self.getRipple_dB()
+            self.ripple_dB = self.getRippleDecibels()
         else:
             raise ValueError('The NER formalism requires `ripple` <= 0.02')
 
@@ -90,7 +90,7 @@ class NER(object):
                 'For the desired passband(s), the NER formalism requires '
                 'that `trans` < %f' % (2 * np.min(intervals)))
 
-    def getRipple_dB(self):
+    def getRippleDecibels(self):
         'Get value of ripple in dB.'
         # Eq. (11) of Kaiser & Reed.
         return -20 * np.log10(self.ripple)
@@ -102,7 +102,7 @@ class NER(object):
 
         '''
         # Eq. (12) of Kaiser & Reed
-        if lambda_dB > 21:
+        if self.ripple_dB > 21:
             Kf = 0.13927 * (self.ripple_dB - 7.95)
         else:
             # Note: this limit should functionally never be used
