@@ -4,6 +4,7 @@
 import numpy as np
 import scipy.signal as signal
 import matplotlib.pyplot as plt
+from scipy.signal import kaiser_beta
 
 
 class NER(object):
@@ -123,7 +124,10 @@ class NER(object):
 
     def getFilterCoefficients(self):
         'Get coefficients via `:py:function:`firwin <scipy.signal.firwin>`.'
+        kbeta = kaiser_beta(-20 * np.log10(self.ripple))
+
         return signal.firwin(self.getNumTaps(), cutoff=self.cutoff,
+                             window=('kaiser', kbeta),
                              pass_zero=self.pass_zero, nyq=(0.5 * self.Fs))
 
     def applyFilter(self):
