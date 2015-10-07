@@ -30,7 +30,7 @@ class NER(object):
             stopband (0 +/- ripple). For the following formalism,
             it is assumed that
 
-                                ripple < 0.02
+                                ripple <= 0.02
 
             If this condition is not satisfied, a ValueError is raised.
             [ripple] = unitless
@@ -70,10 +70,10 @@ class NER(object):
         self.Fs = Fs
 
         # Is the condition on ripple size satisfied?
-        if ripple < 0.02:
+        if ripple <= 0.02:
             self.ripple = ripple
         else:
-            raise ValueError('The NER formalism requires `ripple` < 0.02')
+            raise ValueError('The NER formalism requires `ripple` <= 0.02')
 
         # Is the condition on transition bandwidth satisfied?
         intervals = np.diff(np.concatenate((
@@ -111,7 +111,7 @@ class NER(object):
         delta = self.trans / (self.Fs / 2.)
 
         # Eq. (13) of Kaiser & Reed
-        Np = int((Kf / (2 * delta)) + 0.75)
+        Np = int(np.ceil((Kf / (2 * delta)) + 0.75))
 
         # Now, the returned value for the number of taps is
         # *guaranteed* to be an *odd* integer. As discussed
