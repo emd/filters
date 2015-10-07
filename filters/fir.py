@@ -73,6 +73,7 @@ class NER(object):
         # Is the condition on ripple size satisfied?
         if ripple <= 0.02:
             self.ripple = ripple
+            self.ripple_dB = self.getRipple_dB()
         else:
             raise ValueError('The NER formalism requires `ripple` <= 0.02')
 
@@ -89,18 +90,20 @@ class NER(object):
                 'For the desired passband(s), the NER formalism requires '
                 'that `trans` < %f' % (2 * np.min(intervals)))
 
+    def getRipple_dB(self):
+        'Get value of ripple in dB.'
+        # Eq. (11) of Kaiser & Reed.
+        return -20 * np.log10(self.ripple)
+
     def getNumTaps(self):
         '''Get number of "taps" for desired falloff and accuracy.
         The relevant formulas are given in Eq. (12) and (13) of
         Kaiser & Reed, RSI 48, 1447 (1977).
 
         '''
-        # Eq. (11) of Kaiser & Reed
-        lambda_dB = -20 * np.log10(self.ripple)
-
         # Eq. (12) of Kaiser & Reed
         if lambda_dB > 21:
-            Kf = 0.13927 * (lambda_dB - 7.95)
+            Kf = 0.13927 * (self.ripple_dB - 7.95)
         else:
             # Note: this limit should functionally never be used
             # due to the constraint that `self.ripple` < 0.02,
@@ -124,10 +127,8 @@ class NER(object):
 
     def getFilterCoefficients(self):
         'Get coefficients via `:py:function:`firwin <scipy.signal.firwin>`.'
-        kbeta = kaiser_beta(-20 * np.log10(self.ripple))
-
         return signal.firwin(self.getNumTaps(), cutoff=self.cutoff,
-                             window=('kaiser', kbeta),
+                             window=('kaiser', kaiser_beta(self.ripple_dB)),
                              pass_zero=self.pass_zero, nyq=(0.5 * self.Fs))
 
     def applyFilter(self):
