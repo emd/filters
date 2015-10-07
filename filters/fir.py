@@ -134,6 +134,61 @@ class NER(object):
                              window=('kaiser', kaiser_beta(self.ripple_dB)),
                              pass_zero=self.pass_zero, nyq=(0.5 * self.Fs))
 
+    def getFrequencyResponse(self, freqs_or_N=None, plot=False):
+        '''Get frequency response of filter.
+
+        Parameters:
+        -----------
+        freqs_or_N: {None, int, array_like}, optional
+            If None (default), then compute at 512 frequencies
+            equally spaced from DC to the Nyquist frequency.
+
+            If a single integer, the compute at that many frequencies,
+            again, equally spaced from DC to the Nyquist frequency.
+
+            If an array_like, compute the response at the frequencies given,
+            where the frequencies are given in the same units as `self.Fs`
+
+        plot - bool
+            If true, plot the frequency response curve.
+
+        Returns:
+        -------
+        (f, h): tuple
+
+        f - array_like, (`M`,)
+            The frequencies at which `h` was computed.
+            [f] = [self.Fs]
+
+        h - array_like, (`M`,)
+            The frequency response. This is generally a complex value,
+            so look at `np.abs(h)` to see the magnitude of the
+            transfer function.
+            [h] = unitless
+
+        '''
+        # Unit conversion factor from `self.Fs` to radians / sample
+        Fs_to_wnorm = np.pi / (0.5 * self.Fs)
+
+        # If needed, convert frequencies from units of [`self.Fs`] to
+        # units of radians / sample.
+        if isinstance(freqs_or_N, (list, tuple, np.ndarray)):
+            freqs_or_N *= Fs_to_wnorm
+
+        w, h = signal.freqz(self.b, a=1, worN=freqs_or_N)
+
+        # Convert `w` to units of ['self.Fs']
+        f = w / Fs_to_wnorm
+
+        if plot:
+            plt.figure()
+            plt.semilogy(f, np.abs(h))
+            plt.xlabel('f')
+            plt.ylabel('|h|')
+            plt.show()
+
+        return f, h
+
     def applyTo(self, y):
         '''Apply filter to signal `y`, where `y` was sampled at `self.Fs`.
 
