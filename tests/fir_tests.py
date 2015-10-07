@@ -1,5 +1,4 @@
 from nose import tools
-import numpy as np
 from filters.fir import NER
 
 
@@ -13,6 +12,13 @@ def test_NER__init__ripple():
 def test_NER__init__trans():
     # This transition size is too small for the given passband
     NER(0.01, [2.25, 2.75], 1., 5., pass_zero=False)
+
+
+def test_NER_getRippleDecibels():
+    # Kaiser & Reed, RSI 48, 1447 (1977) state in their paper that for
+    # epsilon = 0.02 the corresponding ripple value (in dB) is ~34
+    filt = NER(0.02, [0.3], 0.2, 2.)
+    tools.assert_almost_equal(filt.getRippleDecibels(), 34, delta=0.1)
 
 
 def test_NER_getNumTaps():
