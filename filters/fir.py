@@ -90,6 +90,9 @@ class NER(object):
                 'For the desired passband(s), the NER formalism requires '
                 'that `trans` < %f' % (2 * np.min(intervals)))
 
+        # Get filter (feedforward) coefficients
+        self.b = self.getFilterCoefficients()
+
     def getRippleDecibels(self):
         'Get value of ripple in dB.'
         # Eq. (11) of Kaiser & Reed.
@@ -131,6 +134,45 @@ class NER(object):
                              window=('kaiser', kaiser_beta(self.ripple_dB)),
                              pass_zero=self.pass_zero, nyq=(0.5 * self.Fs))
 
-    def applyFilter(self):
-        # Convolve with given signal, optimized convolution method
-        pass
+    def applyTo(self, y):
+        '''Apply filter to signal `y`, where `y` was sampled at `self.Fs`.
+
+        An FIR filter is applied via convolution of the signal `y`
+        with the filter coefficients.
+
+        Parameters:
+        -----------
+        y - array_like, (`N`,)
+            The input signal to be filtered. The signal should
+            be sampled at rate `self.Fs`.
+            [y] = arbitrary units
+
+        Returns:
+        --------
+        yfilt - array_like, (`N`)
+            The filtered signal, of the same data type as
+            the input signal `y`.
+            [yfilt] = [y]
+
+        '''
+        # Obtain data type of signal
+        y = np.asarray(y)
+        dtype = y.dtype
+
+        # When convolving a vector of shape (`N`,) with a
+        # kernel of shape (`k`,) convolution is *fastest*
+        # via an FFT if
+        #
+        #               k >= 4 log_2 (N)
+        #
+        # Otherwise, a straightforward convolution is faster.
+        # Relevant background information here:
+        #
+        #       http://programmers.stackexchange.com/a/172839
+        if self.b.size >= (4 * np.log2(y.size)):
+            yfilt = signal.fftconvolve(y, self.b, mode='same')
+        else:
+            yfilt = np.convolve(y, self.b, mode='same')
+
+        # Return filtered signal with same type as input signal
+        return yfilt.astype(dtype)
