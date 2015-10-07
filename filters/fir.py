@@ -80,6 +80,7 @@ class NER(object):
             np.array([0]), np.asarray(cutoff), np.array([Fs / 2.]))))
 
         if np.min(intervals) > (0.5 * trans):
+            self.pass_zero = pass_zero
             self.cutoff = np.asarray(cutoff)
             self.trans = trans
         else:
@@ -120,6 +121,11 @@ class NER(object):
         # introducing phase shifts
         return (2 * Np) + 1
 
-    def filter(self):
+    def getFilterCoefficients(self):
+        'Get coefficients via `:py:function:`firwin <scipy.signal.firwin>`.'
+        return signal.firwin(self.getNumTaps(), cutoff=self.cutoff,
+                             pass_zero=self.pass_zero, nyq=(0.5 * self.Fs))
+
+    def applyFilter(self):
         # Convolve with given signal, optimized convolution method
         pass
