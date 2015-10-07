@@ -1,4 +1,5 @@
 from nose import tools
+import numpy as np
 from filters.fir import NER
 
 
@@ -27,3 +28,13 @@ def test_NER_getNumTaps():
     # Np = 10 pairs of terms, for a total of 2 * Np + 1 = 21 taps
     filt = NER(0.02, [0.3], 0.2, 2.)
     tools.assert_equal(filt.getNumTaps(), 21)
+
+
+def test_NER_getFrequencyResponse():
+    # Create a bandpass filter that passes signal from 26 < f [Hz] < 28
+    # for a signal sampled at 200 Hz
+    bpf = NER(0.02, [26, 28], 0.5, 200, pass_zero=False)
+
+    # The filter gain should be -3 dB (i.e. ~0.5) at the cutoff frequencies
+    f, h = bpf.getFrequencyResponse(freqs_or_N=bpf.cutoff)
+    np.testing.assert_almost_equal(np.abs(h), 10 ** -0.3, decimal=2)

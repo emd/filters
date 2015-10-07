@@ -170,12 +170,16 @@ class NER(object):
         # Unit conversion factor from `self.Fs` to radians / sample
         Fs_to_wnorm = np.pi / (0.5 * self.Fs)
 
-        # If needed, convert frequencies from units of [`self.Fs`] to
-        # units of radians / sample.
         if isinstance(freqs_or_N, (list, tuple, np.ndarray)):
-            freqs_or_N *= Fs_to_wnorm
+            # Copy array and cast to numpy array of floats
+            worN = np.asarray(freqs_or_N).astype('float')
 
-        w, h = signal.freqz(self.b, a=1, worN=freqs_or_N)
+            # Convert frequencies from units of [`self.Fs`] to radians / sample
+            worN *= Fs_to_wnorm
+        else:
+            worN = Fs_to_wnorm
+
+        w, h = signal.freqz(self.b, a=1, worN=worN)
 
         # Convert `w` to units of ['self.Fs']
         f = w / Fs_to_wnorm
