@@ -5,7 +5,7 @@ except ImportError:
 
 config = {
     'name': 'filters',
-    'version': '0.1.1',
+    'version': '0.1.2',
     'packages': ['filters'],
     'install_requires': ['numpy', 'scipy', 'matplotlib', 'nose'],
     'author': 'Evan M. Davis',
