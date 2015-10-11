@@ -205,7 +205,7 @@ class NER(object):
 
         return slice(Np, -Np, None)
 
-    def applyTo(self, y):
+    def applyTo(self, y, check_fftconvolve=True):
         '''Apply filter to signal `y`, where `y` was sampled at `self.Fs`.
 
         An FIR filter is applied via convolution of the signal `y`
@@ -217,6 +217,15 @@ class NER(object):
             The input signal to be filtered. The signal should
             be sampled at rate `self.Fs`.
             [y] = arbitrary units
+
+        check_fftconvolve - bool
+            If True, check to see if convolution should be computed
+            via the FFT. While `fftconvolve(...)` can be faster than
+            direct convolution via `convolve(...)`, it also requires
+            more memory overhead. If `fftconvolve(...)` raises
+            MemoryError, one can set check_fftconvolve to False
+            to perform the direct (slower) convolution, potentially
+            avoiding a MemoryError.
 
         Returns:
         --------
@@ -240,7 +249,11 @@ class NER(object):
         # Relevant background information here:
         #
         #       http://programmers.stackexchange.com/a/172839
-        if self.b.size >= (4 * np.log2(y.size)):
+        #
+        # However, `fftconvolve` can incur large memory overhead,
+        # potentially resulting in a `MemoryError`. A dirty hack
+        # is just to resort to the (slower) direct convolution...
+        if check_fftconvolve and self.b.size >= (4 * np.log2(y.size)):
             yfilt = signal.fftconvolve(y, self.b, mode='same')
         else:
             yfilt = np.convolve(y, self.b, mode='same')
