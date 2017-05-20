@@ -11,7 +11,7 @@ class Kaiser(object):
     '''Type I FIR filter designed via Kaiser windowing.
 
     '''
-    def __init__(self, Fs, passband, ripple, width):
+    def __init__(self, Fs, stopband, ripple, width):
         '''Initialize Type I FIR filter designed via Kaiser windowing.
 
         Parameters:
@@ -20,12 +20,19 @@ class Kaiser(object):
             Sample rate of discrete-time signal.
             [Fs] = AU
 
-        passband - TODO
-            [passband] = [Fs] (i.e. same units as sample rate)
+        stopband - (`N`,), array_like, with `N` an *even* integer
+            A monotonically increasing array, with each sequential pair
+            specifying the lower and upper boundaries of a stopband.
+
+            If a value in `stopband` sits below zero or above the
+            Nyquist frequency (i.e. 0.5 * `Fs`), a ValueError is raised.
+            A ValueError is also raised if `N` is not even.
+
+            [stopband] = [Fs] (i.e. same units as sample rate)
 
         ripple - float
-            The ripple (in dB) of the filter's passband(s) and stopband(s).
-            For example, if 1% variations in the passband amplitude are
+            The ripple (in dB) of the filter's stopband(s) and passband(s).
+            For example, if 1% variations in the stopband amplitude are
             acceptable, then
 
                 ripple = 20 * log10(0.01) = -40
@@ -41,6 +48,8 @@ class Kaiser(object):
         self.ripple = ripple
         self.width = width
 
+        self.b = self.getFilterCoefficients(stopband)
+
     def getNumTaps(self):
         'Get number of filter "taps" for desired ripple and width.'
         Ntaps = signal.kaiserord(
@@ -52,6 +61,45 @@ class Kaiser(object):
         Ntaps = (2 * (Ntaps / 2)) + 1
 
         return Ntaps
+
+    def _processStopband(self, stopband):
+        '''Process `stopband` to produce input that is compatible with
+        :py:function:`firwin <scipy.signal.firwin>`.
+
+        '''
+        # Each *pair* of values in `stopband` defines a stopband
+        if len(stopband) % 2 != 0:
+            raise ValueError('`stopband` must be an array of *even* length')
+
+        stopband = list(stopband)
+
+        # Process lower bound
+        if stopband[0] < 0:
+            raise ValueError('`stopband` values must be >= 0')
+        elif stopband[0] == 0:
+            pass_zero = False
+            stopband.remove(0)
+        else:
+            pass_zero = True
+
+        # Process upper bound
+        if stopband[-1] > (0.5 * self.Fs):
+            raise ValueError('`stopband` values must be <= (0.5 * `Fs`)')
+        elif stopband[-1] == (0.5 * self.Fs):
+            stopband.pop()
+
+        return stopband, pass_zero
+
+    def getFilterCoefficients(self, stopband):
+        'Get feedforward filter coefficients.'
+        cutoff, pass_zero = self._processStopband(stopband)
+
+        return signal.firwin(
+            self.getNumTaps(),
+            cutoff=cutoff,
+            width=self.width,
+            pass_zero=pass_zero,
+            nyq=(0.5 * self.Fs))
 
 
 class NER(object):
