@@ -1,6 +1,50 @@
 from nose import tools
 import numpy as np
-from filters.fir import NER
+from filters.fir import Kaiser, NER
+
+
+def test_Kaiser_getNumTaps():
+    # From Oppenheim & Schafer "Discrete-Time Signal Processing" 3rd Ed.
+    # Section 7.6.1 (pg 545), for a lowpass filter with
+    #
+    #   ripple = -60 dB, and
+    #   Delta omega = 0.2 * pi,
+    #
+    # they obtain M = 37; the number of taps is M + 1 = 38, then.
+    # However, :py:class:`Kaiser <filters.fir.Kaiser>` corresponds
+    # to a Type I FIR filter, which requires an *odd* number of taps.
+    # Thus, we should expect that the number of taps returned by
+    # `Kaiser.getNumTaps()` is 39.
+    #
+    # Note: Oppenheim and Schafer utilize a frequency normalization
+    # such that Delta omega = pi corresponds to the Nyquist *angular*
+    # frequency (i.e. the normalized Nyquist frequency is unity).
+    # To make contact with their calculations, then, we need to
+    # ensure that
+    #
+    #   Delta omega / angular Nyquist rate = (0.2 * pi) / pi = 0.2
+    Ntaps_expected = 39
+
+    # Initialize frequencies with unity Nyquist frequency
+    fNy = 1.
+    Fs = 2 * fNy
+    width = 0.2 * fNy
+    passband = np.array([0, 0.5])
+
+    # Scaling factors -- uniformly altering timescale with
+    # a scaling factor should *not* alter required number of taps
+    scalings = np.array([1., 10., 0.1])
+
+    for scaling in scalings:
+        lpf = Kaiser(
+            Fs * scaling,
+            passband * scaling,
+            -60,
+            width * scaling)
+
+        tools.assert_equal(
+            lpf.getNumTaps(),
+            Ntaps_expected)
 
 
 @tools.raises(ValueError)

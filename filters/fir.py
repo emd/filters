@@ -7,6 +7,53 @@ import matplotlib.pyplot as plt
 from scipy.signal import kaiser_beta
 
 
+class Kaiser(object):
+    '''Type I FIR filter designed via Kaiser windowing.
+
+    '''
+    def __init__(self, Fs, passband, ripple, width):
+        '''Initialize Type I FIR filter designed via Kaiser windowing.
+
+        Parameters:
+        -----------
+        Fs - float
+            Sample rate of discrete-time signal.
+            [Fs] = AU
+
+        passband - TODO
+            [passband] = [Fs] (i.e. same units as sample rate)
+
+        ripple - float
+            The ripple (in dB) of the filter's passband(s) and stopband(s).
+            For example, if 1% variations in the passband amplitude are
+            acceptable, then
+
+                ripple = 20 * log10(0.01) = -40
+
+            [ripple] = dB
+
+        width - float
+            The width of the transition region between passband and stopband.
+            [width] = [Fs] (i.e. same units as sample rate)
+
+        '''
+        self.Fs = Fs
+        self.ripple = ripple
+        self.width = width
+
+    def getNumTaps(self):
+        'Get number of filter "taps" for desired ripple and width.'
+        Ntaps = signal.kaiserord(
+            -self.ripple,
+            self.width / (0.5 * self.Fs))[0]
+
+        # Ensure that the number of taps is *odd*, as required
+        # for a Type I FIR filter
+        Ntaps = (2 * (Ntaps / 2)) + 1
+
+        return Ntaps
+
+
 class NER(object):
     '''Nearly Equal Ripple (NER) finite impulse response (FIR) filter object.
 
