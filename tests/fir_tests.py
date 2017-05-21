@@ -29,74 +29,24 @@ def test_Kaiser_getNumTaps():
     fNy = 1.
     Fs = 2 * fNy
     width = 0.2 * fNy
-    passband = np.array([0, 0.5])
+    f_3dB = np.array([0.5])
 
     # Scaling factors -- uniformly altering timescale with
     # a scaling factor should *not* alter required number of taps
     scalings = np.array([1., 10., 0.1])
 
     for scaling in scalings:
+        # def __init__(self, ripple, width, f_3dB, pass_zero=True, Fs=1.):
         lpf = Kaiser(
-            Fs * scaling,
-            passband * scaling,
             -60,
-            width * scaling)
+            width * scaling,
+            f_3dB * scaling,
+            pass_zero=True,
+            Fs=(Fs * scaling))
 
         tools.assert_equal(
             lpf.getNumTaps(),
             Ntaps_expected)
-
-    return
-
-
-def test_Kaiser__processStopband():
-    # These parameters are of little direct relevance to these tests
-    fNy = 1.
-    Fs = 2 * fNy
-    ripple = -60
-    width = 0.05 * fNy
-
-    # `stopband` should be array of *even* length
-    stopband = np.array([0.1, 0.2, 0.3]) * fNy
-    tools.assert_raises(
-        ValueError,
-        Kaiser,
-        *(Fs, stopband, ripple, width))
-
-    # `stopband` values should *not* be less than zero
-    stopband = np.array([-0.1, 0.2]) * fNy
-    tools.assert_raises(
-        ValueError,
-        Kaiser,
-        *(Fs, stopband, ripple, width))
-
-    # `stopband` values should *not* exceed Nyquist frequency
-    stopband = np.array([0.5, 1.1]) * fNy
-    tools.assert_raises(
-        ValueError,
-        Kaiser,
-        *(Fs, stopband, ripple, width))
-
-    # Test filter with several stopbands, one of which begins at zero
-    stopband = fNy * np.array([
-        0.0, 0.2,
-        0.4, 0.6,
-        0.8, 1.0
-    ])
-    filt = Kaiser(Fs, stopband, ripple, width)
-    cutoff, pass_zero = filt._processStopband(stopband)
-    tools.assert_equal(pass_zero, False)
-    np.testing.assert_equal(cutoff, stopband[1:-1])
-
-    # Test filter with several stopbands, all away from zero
-    stopband = fNy * np.array([
-        0.2, 0.4,
-        0.6, 0.8
-    ])
-    filt = Kaiser(Fs, stopband, ripple, width)
-    cutoff, pass_zero = filt._processStopband(stopband)
-    tools.assert_equal(pass_zero, True)
-    np.testing.assert_equal(cutoff, stopband)
 
     return
 

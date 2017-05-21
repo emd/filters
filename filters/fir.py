@@ -11,28 +11,14 @@ class Kaiser(object):
     '''Type I FIR filter designed via Kaiser windowing.
 
     '''
-    def __init__(self, Fs, stopband, ripple, width):
+    def __init__(self, ripple, width, f_3dB, pass_zero=True, Fs=1.):
         '''Initialize Type I FIR filter designed via Kaiser windowing.
 
         Parameters:
         -----------
-        Fs - float
-            Sample rate of discrete-time signal.
-            [Fs] = AU
-
-        stopband - (`N`,), array_like, with `N` an *even* integer
-            A monotonically increasing array, with each sequential pair
-            specifying the lower and upper boundaries of a stopband.
-
-            If a value in `stopband` sits below zero or above the
-            Nyquist frequency (i.e. 0.5 * `Fs`), a ValueError is raised.
-            A ValueError is also raised if `N` is not even.
-
-            [stopband] = [Fs] (i.e. same units as sample rate)
-
         ripple - float
-            The ripple (in dB) of the filter's stopband(s) and passband(s).
-            For example, if 1% variations in the stopband amplitude are
+            The ripple (in dB) of the filter's passband(s) and stopband(s).
+            For example, if 1% variations in the passband amplitude are
             acceptable, then
 
                 ripple = 20 * log10(0.01) = -40
@@ -43,12 +29,26 @@ class Kaiser(object):
             The width of the transition region between passband and stopband.
             [width] = [Fs] (i.e. same units as sample rate)
 
+        f_3dB - (`N`,), array_like
+            A monotonically increasing array specifying the 3 dB points
+            of the filter.
+            [f_3dB] = [Fs] (i.e. same units as sample rate)
+
+        pass_zero - bool
+            If True, the DC gain is unity; otherwise the DC gain is zero.
+
+        Fs - float
+            Sample rate of discrete-time signal.
+            [Fs] = AU
+
         '''
-        self.Fs = Fs
         self.ripple = ripple
         self.width = width
+        self.f_3dB = f_3dB
+        self.pass_zero = pass_zero
+        self.Fs = Fs
 
-        self.b = self.getFilterCoefficients(stopband)
+        self.b = self.getFilterCoefficients()
 
     def getNumTaps(self):
         'Get number of filter "taps" for desired ripple and width.'
@@ -58,47 +58,17 @@ class Kaiser(object):
 
         # Ensure that the number of taps is *odd*, as required
         # for a Type I FIR filter
-        Ntaps = (2 * (Ntaps / 2)) + 1
+        Ntaps = (2 * (Ntaps // 2)) + 1
 
         return Ntaps
 
-    def _processStopband(self, stopband):
-        '''Process `stopband` to produce input that is compatible with
-        :py:function:`firwin <scipy.signal.firwin>`.
-
-        '''
-        # Each *pair* of values in `stopband` defines a stopband
-        if len(stopband) % 2 != 0:
-            raise ValueError('`stopband` must be an array of *even* length')
-
-        stopband = list(stopband)
-
-        # Process lower bound
-        if stopband[0] < 0:
-            raise ValueError('`stopband` values must be >= 0')
-        elif stopband[0] == 0:
-            pass_zero = False
-            stopband.remove(0)
-        else:
-            pass_zero = True
-
-        # Process upper bound
-        if stopband[-1] > (0.5 * self.Fs):
-            raise ValueError('`stopband` values must be <= (0.5 * `Fs`)')
-        elif stopband[-1] == (0.5 * self.Fs):
-            stopband.pop()
-
-        return stopband, pass_zero
-
-    def getFilterCoefficients(self, stopband):
+    def getFilterCoefficients(self):
         'Get feedforward filter coefficients.'
-        cutoff, pass_zero = self._processStopband(stopband)
-
         return signal.firwin(
             self.getNumTaps(),
-            cutoff=cutoff,
+            cutoff=self.f_3dB,
             width=self.width,
-            pass_zero=pass_zero,
+            pass_zero=self.pass_zero,
             nyq=(0.5 * self.Fs))
 
 
