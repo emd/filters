@@ -29,24 +29,68 @@ def test_Kaiser_getNumTaps():
     fNy = 1.
     Fs = 2 * fNy
     width = 0.2 * fNy
-    f_3dB = np.array([0.5])
+    f_6dB = np.array([0.5])
 
     # Scaling factors -- uniformly altering timescale with
     # a scaling factor should *not* alter required number of taps
     scalings = np.array([1., 10., 0.1])
 
     for scaling in scalings:
-        # def __init__(self, ripple, width, f_3dB, pass_zero=True, Fs=1.):
         lpf = Kaiser(
             -60,
             width * scaling,
-            f_3dB * scaling,
+            f_6dB * scaling,
             pass_zero=True,
             Fs=(Fs * scaling))
 
         tools.assert_equal(
             lpf.getNumTaps(),
             Ntaps_expected)
+
+    return
+
+
+def test_Kaiser_getResponse():
+    # Create a high-pass filter
+    ripple = -60
+    width = 5e3
+    f_6dB = 10e3
+    Fs = 4e6
+    hpf = Kaiser(ripple, width, f_6dB, pass_zero=False, Fs=Fs)
+
+    # Power response @ `f_6dB` should be -6 dB
+    f, H = hpf.getResponse(f=f_6dB)
+    np.testing.assert_allclose(
+        20 * np.log10(np.abs(H)),
+        -6,
+        rtol=0.1)
+
+    # Power response (dB) in stopband should be <= `ripple`
+    f = np.arange(0, f_6dB - (0.5 * width), 10)
+    f, H = hpf.getResponse(f=f)
+    tools.assert_less_equal(
+        np.max(20 * np.log10(np.abs(H))),
+        ripple)
+
+    # Power response in passband should be:
+    #
+    #   >= (1 - `delta`), and
+    #   <= (1 + `delta`),
+    #
+    # where `delta` is the ripple expressed in amplitude
+    # (as opposed to dB)
+    delta = 10 ** (ripple / 20.)
+
+    f = np.arange(f_6dB + (0.5 * width), 0.5 * Fs, 1000)
+    f, H = hpf.getResponse(f=f)
+
+    tools.assert_greater_equal(
+        np.min(np.abs(H)),
+        1 - delta)
+
+    tools.assert_less_equal(
+        np.max(np.abs(H)),
+        1 + delta)
 
     return
 
