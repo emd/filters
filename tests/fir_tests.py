@@ -1,6 +1,7 @@
 from nose import tools
 import numpy as np
 from matplotlib.mlab import psd
+from scipy.signal import fftconvolve
 from filters.fir import Kaiser, NER
 
 
@@ -148,7 +149,7 @@ def test_Kaiser_delay():
     ripple = -60
     width = 5e3
     f_6dB = [40e3, 60e3]
-    Fs = 200e3
+    Fs = 4e6
     bpf = Kaiser(ripple, width, f_6dB, pass_zero=False, Fs=Fs)
 
     # Create linearly chirping signal from 10 kHz to 100 kHz.
@@ -167,14 +168,14 @@ def test_Kaiser_delay():
     valid = bpf.getValidSlice()
 
     # Cross correlate raw and filtered signals
-    xcorr = np.correlate(y[valid], yfilt[valid], mode='full')
+    xcorr = fftconvolve(y[valid], yfilt[valid][::-1], mode='full')
 
     # Determine delay corresponding to each value in `xcorr`.
-    # For `np.correlate(y1, y2, mode='full')`, the returned array
+    # For `fftconvolve(y1, y2, mode='full')`, the returned array
     # has dimensions `M + N - 1`, where `M = len(y1)` and `N = len(y2)`,
     # with the center point corresponding to zero delay.
     N = len(y[valid])
-    tau = np.arange(-(N - 1), N - 1)
+    tau = np.arange(-(N - 1), N)
 
     # If filter really does not delay signal, then peak cross correlation
     # should occur at zero delay
