@@ -1,5 +1,6 @@
 from nose import tools
 import numpy as np
+from matplotlib.mlab import psd
 from filters.fir import Kaiser, NER
 
 
@@ -91,6 +92,53 @@ def test_Kaiser_getResponse():
     tools.assert_less_equal(
         np.max(np.abs(H)),
         1 + delta)
+
+    return
+
+
+def test_Kaiser_applyTo():
+    # Create a high-pass filter
+    ripple = -60
+    width = 5e3
+    f_6dB = 10e3
+    Fs = 200e3
+    hpf = Kaiser(ripple, width, f_6dB, pass_zero=False, Fs=Fs)
+
+    # Sum of two sinusoidal signals, with one signal clearly
+    # in the stopband and the other clearly in the passband
+    t = np.arange(0, 0.1, 1. / Fs)
+    fstop = f_6dB - (0.5 * width)
+    fpass = f_6dB + (0.5 * width)
+    ystop = np.cos(2 * np.pi * fstop * t)
+    ypass = np.cos(2 * np.pi * fpass * t)
+    y = ystop + ypass
+
+    # Apply filter and determine region w/o boundary effects
+    yfilt = hpf.applyTo(y)
+    valid = hpf.getValidSlice()
+
+    # Compute autospectral densities of raw and filtered signal
+    NFFT = 2048  # ~10 ms
+    noverlap = NFFT // 2
+    asd_raw, f = psd(y[valid], Fs=Fs, NFFT=NFFT, noverlap=noverlap)
+    asd_filt, f = psd(yfilt[valid], Fs=Fs, NFFT=NFFT, noverlap=noverlap)
+
+    # Compare to expectations
+    tmp, Hstop = hpf.getResponse(f=fstop)
+    tmp, Hpass = hpf.getResponse(f=fpass)
+
+    dfstop = np.abs(fstop - f)
+    dfpass = np.abs(fpass - f)
+    ind_fstop = np.where(dfstop == np.min(dfstop))[0]
+    ind_fpass = np.where(dfpass == np.min(dfpass))[0]
+
+    tools.assert_almost_equal(
+        asd_raw[ind_fstop] * (np.abs(Hstop) ** 2),
+        asd_filt[ind_fstop])
+
+    tools.assert_almost_equal(
+        asd_raw[ind_fpass] * (np.abs(Hpass) ** 2),
+        asd_filt[ind_fpass])
 
     return
 

@@ -153,6 +153,17 @@ class Kaiser(object):
         # Return filtered signal with same type as input signal
         return yfilt.astype(dtype)
 
+    def getValidSlice(self):
+        '''Get slice corresponding to `valid` data points in filtered signal,
+        for which boundary effects of the filter are not visible.
+
+        '''
+        # The filter has (2 * `N`) + 1 taps, so the first `N` and last `N`
+        # points in the filtered signal display boundary effects
+        N = (len(self.b) - 1) // 2
+
+        return slice(N, -N, None)
+
 
 class NER(object):
     '''Nearly Equal Ripple (NER) finite impulse response (FIR) filter object.
