@@ -143,6 +143,47 @@ def test_Kaiser_applyTo():
     return
 
 
+def test_Kaiser_delay():
+    # Create a bandpass filter
+    ripple = -60
+    width = 5e3
+    f_6dB = [40e3, 60e3]
+    Fs = 200e3
+    bpf = Kaiser(ripple, width, f_6dB, pass_zero=False, Fs=Fs)
+
+    # Create linearly chirping signal from 10 kHz to 100 kHz.
+    # Note that for a linear chirp, the phase evolution goes as
+    # (ramp rate) * t^2, and the instantaneous frequency goes
+    # as 2 * (ramp rate) * t
+    t = np.arange(0, 0.1, 1. / Fs)
+    fstart = 10e3
+    fstop = 50e3
+    m = (fstop - fstart) / (t[-1] - t[0])
+    f = fstart + (m * t)
+    y = np.cos(2 * np.pi * f * t)
+
+    # Filter chirped signal
+    yfilt = bpf.applyTo(y)
+    valid = bpf.getValidSlice()
+
+    # Cross correlate raw and filtered signals
+    xcorr = np.correlate(y[valid], yfilt[valid], mode='full')
+
+    # Determine delay corresponding to each value in `xcorr`.
+    # For `np.correlate(y1, y2, mode='full')`, the returned array
+    # has dimensions `M + N - 1`, where `M = len(y1)` and `N = len(y2)`,
+    # with the center point corresponding to zero delay.
+    N = len(y[valid])
+    tau = np.arange(-(N - 1), N - 1)
+
+    # If filter really does not delay signal, then peak cross correlation
+    # should occur at zero delay
+    imax = np.where(np.abs(xcorr) == np.max(np.abs(xcorr)))[0]
+    tools.assert_equal(tau[imax], 0)
+
+    return
+
+
 @tools.raises(ValueError)
 def test_NER__init__ripple():
     # This ripple size is too large
