@@ -10,6 +10,10 @@ from scipy.signal import kaiser_beta
 class Kaiser(object):
     '''Type I FIR filter designed via Kaiser windowing.
 
+    This is essentially a wrapper around Scipy's filter routines
+    with additional insight from Kaiser & Reed, RSI 48, 1447 (1977),
+    which describes requirements for a FIR filter with *zero* delay.
+
     '''
     def __init__(self, ripple, width, f_6dB, pass_zero=True, Fs=1.):
         '''Initialize Type I FIR filter designed via Kaiser windowing.
