@@ -4,7 +4,6 @@
 import numpy as np
 import scipy.signal as signal
 import matplotlib.pyplot as plt
-from scipy.signal import kaiser_beta
 
 
 class Kaiser(object):
