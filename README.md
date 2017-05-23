@@ -91,7 +91,7 @@ lpf.plotResponse(f=np.arange(0, (0.5 * Fs) + df, df))
 
 ```
 
-![mode_number_fit](https://raw.githubusercontent.com/emd/filters/figs/lowpass_filter.png)
+![mode_number_fit](https://raw.githubusercontent.com/emd/filters/master/figs/lowpass_filter.png)
 
 This filter can be easily applied to a given signal.
 For example, take the linearly chirped signal
@@ -132,7 +132,7 @@ plt.show()
 
 ```
 
-![mode_number_fit](https://raw.githubusercontent.com/emd/filters/figs/lowpass_filter.png)
+![mode_number_fit](https://raw.githubusercontent.com/emd/filters/master/figs/lowpass_filter.png)
 
 The above figure highlights several important properties of the filter:
 
