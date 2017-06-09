@@ -100,12 +100,17 @@ class Kaiser(object):
 
         return f, H
 
-    def plotResponse(self, f=None):
+    def plotResponse(self, f=None, xscale='linear'):
         'Plot frequency response |H(f)|.'
         f, H = self.getResponse(f=f)
 
         plt.figure()
-        plt.semilogy(f, np.abs(H))
+
+        if xscale == 'log':
+            plt.loglog(f, np.abs(H))
+        else:
+            plt.semilogy(f, np.abs(H))
+
         plt.xlabel('f')
         plt.ylabel('|H(f)|')
         plt.show()
