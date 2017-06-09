@@ -149,12 +149,26 @@ class Kaiser(object):
         #       http://programmers.stackexchange.com/a/172839
         #
         if self.b.size >= (4 * np.log2(y.size)):
+            self.printFilterParameters(filter_method='FFT')
             yfilt = signal.fftconvolve(y, self.b, mode='same')
         else:
+            self.printFilterParameters(filter_method='convolution')
             yfilt = np.convolve(y, self.b, mode='same')
 
         # Return filtered signal with same type as input signal
         return yfilt.astype(dtype)
+
+    def printFilterParameters(self, filter_method='FFT'):
+        'Print filter parameters to screen.'
+        print '\nApplying zero-delay, Kaiser-designed FIR filter'
+        print 'Fs: %f' % self.Fs
+        print 'DC coupled: %s' % self.pass_zero
+        print 'f_6dB: %s' % str(self.f_6dB)
+        print 'width: %f' % self.width
+        print 'ripple: %i' % int(self.ripple)
+        print 'method: %s' % filter_method
+
+        return
 
     def getValidSlice(self):
         '''Get slice corresponding to `valid` data points in filtered signal,
