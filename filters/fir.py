@@ -170,7 +170,7 @@ class Kaiser(object):
         print 'DC coupled: %s' % self.pass_zero
         print 'f_6dB: %s' % str(self.f_6dB)
         print 'width: %f' % self.width
-        print 'ripple: %i' % int(self.ripple)
+        print 'ripple: %i dB' % int(self.ripple)
         print 'method: %s' % filter_method
 
         return
